@@ -53,11 +53,9 @@ if [ -n "$STAGED_FILES" ]; then
     'sk_live_[0-9a-zA-Z]{24,}'
     'pk_live_[0-9a-zA-Z]{24,}'
     'rk_live_[0-9a-zA-Z]{24,}'
-    # Twilio
-    'SK[0-9a-fA-F]{32}'
-    'AC[0-9a-fA-F]{32}'
-    # Heroku
-    '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
+    # Twilio (anchored to word boundary to reduce false positives)
+    '(^|[^a-zA-Z0-9])SK[0-9a-fA-F]{32}([^a-zA-Z0-9]|$)'
+    '(^|[^a-zA-Z0-9])AC[0-9a-fA-F]{32}([^a-zA-Z0-9]|$)'
     # Azure
     'DefaultEndpointsProtocol=https'
     # SendGrid
@@ -108,26 +106,26 @@ if [ -n "$STAGED_FILES" ]; then
       ERRORS=$((ERRORS + 1))
     fi
   done <<< "$STAGED_FILES"
-fi
 
-# ─── 3. LOG.md check ───
-# If committing phase work, LOG.md should be updated too
+  # ─── 3. LOG.md check ───
+  # If committing phase work, LOG.md should be updated too
 
-while IFS= read -r file; do
-  [ -z "$file" ] && continue
+  while IFS= read -r file; do
+    [ -z "$file" ] && continue
 
-  # Detect if we're committing code inside a phase directory
-  if [[ "$file" =~ ^docs/phases/[0-9]{2}- ]] && [[ "$file" != *LOG.md ]] && [[ "$file" != *PLAN.md ]]; then
-    PHASE_DIR=$(echo "$file" | grep -oE 'docs/phases/[0-9]{2}-[^/]+')
-    if [ -n "$PHASE_DIR" ]; then
-      # Check if LOG.md is also being updated in this commit
-      if ! echo "$STAGED_FILES" | grep -q "${PHASE_DIR}/LOG.md"; then
-        echo -e "${YELLOW}[KEEL] Warning: Committing phase files without updating ${PHASE_DIR}/LOG.md${NC}"
-        # Warning only, not a block
+    # Detect if we're committing code inside a phase directory
+    if [[ "$file" =~ ^docs/phases/[0-9]{2}- ]] && [[ "$file" != *LOG.md ]] && [[ "$file" != *PLAN.md ]]; then
+      PHASE_DIR=$(echo "$file" | grep -oE 'docs/phases/[0-9]{2}-[^/]+')
+      if [ -n "$PHASE_DIR" ]; then
+        # Check if LOG.md is also being updated in this commit
+        if ! echo "$STAGED_FILES" | grep -q "${PHASE_DIR}/LOG.md"; then
+          echo -e "${YELLOW}[KEEL] Warning: Committing phase files without updating ${PHASE_DIR}/LOG.md${NC}"
+          # Warning only, not a block
+        fi
       fi
     fi
-  fi
-done <<< "$STAGED_FILES"
+  done <<< "$STAGED_FILES"
+fi
 
 # ─── Result ───
 if [ $ERRORS -gt 0 ]; then

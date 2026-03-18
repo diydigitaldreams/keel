@@ -97,7 +97,7 @@ if [ -f "$TARGET/docs/ROADMAP.md" ]; then
       PHASE_DIR=$(find "$TARGET/docs/phases" -maxdepth 1 -type d -name "${PHASE_NUM_PADDED}-*" 2>/dev/null | head -n 1)
 
       # Get status from roadmap
-      STATUS=$(grep -A2 "$phase_line" "$TARGET/docs/ROADMAP.md" | grep -oE '(pending|active|complete)' | head -n 1)
+      STATUS=$(grep -F -A2 "$phase_line" "$TARGET/docs/ROADMAP.md" | grep -oE '(pending|active|complete)' | head -n 1)
       STATUS="${STATUS:-unknown}"
 
       if [ -n "$PHASE_DIR" ]; then
