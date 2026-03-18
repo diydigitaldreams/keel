@@ -8,7 +8,7 @@ GREEN='\033[0;32m'
 NC='\033[0m'
 
 COMMIT_MSG_FILE="$1"
-COMMIT_MSG=$(head -1 "$COMMIT_MSG_FILE")
+COMMIT_MSG=$(head -n 1 "$COMMIT_MSG_FILE")
 
 # Allow merge commits and initial commits
 if [[ "$COMMIT_MSG" =~ ^Merge ]] || [[ "$COMMIT_MSG" =~ ^Initial ]]; then

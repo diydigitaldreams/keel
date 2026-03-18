@@ -11,6 +11,23 @@
 
 set -e
 
+# Help
+if [ "${1}" = "--help" ] || [ "${1}" = "-h" ]; then
+  echo "KEEL Validate — Check project state integrity"
+  echo ""
+  echo "Usage: ./validate.sh [project-directory]"
+  echo ""
+  echo "Checks:"
+  echo "  - Required files exist (.claude/CLAUDE.md, docs/SCOPE.md, docs/ROADMAP.md)"
+  echo "  - Every roadmap phase has a matching directory"
+  echo "  - Every phase directory has PLAN.md and LOG.md"
+  echo "  - No orphaned phase directories"
+  echo "  - Phase statuses are consistent with LOG.md content"
+  echo ""
+  echo "If no project directory is given, validates the current directory."
+  exit 0
+fi
+
 TARGET="${1:-.}"
 
 RED='\033[0;31m'
@@ -65,22 +82,22 @@ fi
 # ─── 4. Roadmap / phase directory consistency ───
 
 if [ -f "$TARGET/docs/ROADMAP.md" ]; then
-  # Extract phase numbers and names from roadmap
-  ROADMAP_PHASES=$(grep -oE 'Phase [0-9]+: .+' "$TARGET/docs/ROADMAP.md" 2>/dev/null || true)
+  # Extract phase numbers and names from roadmap (anchored to markdown headers)
+  ROADMAP_PHASES=$(grep -E '^#{1,3} Phase [0-9]+: .+' "$TARGET/docs/ROADMAP.md" 2>/dev/null | sed 's/^#* //' || true)
 
   if [ -n "$ROADMAP_PHASES" ]; then
     echo "Phases:"
 
     while IFS= read -r phase_line; do
       # Extract phase number
-      PHASE_NUM=$(echo "$phase_line" | grep -oE '[0-9]+' | head -1)
+      PHASE_NUM=$(echo "$phase_line" | grep -oE '[0-9]+' | head -n 1)
       PHASE_NUM_PADDED=$(printf "%02d" "$PHASE_NUM")
 
       # Find matching directory
-      PHASE_DIR=$(find "$TARGET/docs/phases" -maxdepth 1 -type d -name "${PHASE_NUM_PADDED}-*" 2>/dev/null | head -1)
+      PHASE_DIR=$(find "$TARGET/docs/phases" -maxdepth 1 -type d -name "${PHASE_NUM_PADDED}-*" 2>/dev/null | head -n 1)
 
       # Get status from roadmap
-      STATUS=$(grep -A2 "$phase_line" "$TARGET/docs/ROADMAP.md" | grep -oE '(pending|active|complete)' | head -1)
+      STATUS=$(grep -A2 "$phase_line" "$TARGET/docs/ROADMAP.md" | grep -oE '(pending|active|complete)' | head -n 1)
       STATUS="${STATUS:-unknown}"
 
       if [ -n "$PHASE_DIR" ]; then
