@@ -165,6 +165,14 @@ KEEL includes optional git hooks that enforce conventions automatically. No runt
 ./keel/setup.sh --no-hooks /path/to/your-project
 ```
 
+**Force overwrite existing CLAUDE.md (non-interactive/CI):**
+```bash
+./keel/setup.sh --force /path/to/your-project
+```
+
+If `setup.sh` detects an existing `.claude/CLAUDE.md`, it prompts before overwriting in interactive shells. In non-interactive environments, it exits with an error unless `--force` is provided.
+
+
 ### What the hooks enforce
 
 | Hook | What it does |
