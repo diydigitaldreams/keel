@@ -4,6 +4,7 @@
 #        ./setup.sh --help
 #        ./setup.sh --no-hooks [target-directory]
 #        ./setup.sh --hooks-only [target-directory]
+#        ./setup.sh --force [target-directory]
 
 set -e
 
@@ -12,6 +13,7 @@ TEMPLATE_DIR="$SCRIPT_DIR/template"
 HOOKS_DIR="$SCRIPT_DIR/hooks"
 INSTALL_HOOKS=true
 HOOKS_ONLY=false
+FORCE_OVERWRITE=false
 
 # Help
 if [ "${1}" = "--help" ] || [ "${1}" = "-h" ]; then
@@ -22,6 +24,7 @@ if [ "${1}" = "--help" ] || [ "${1}" = "-h" ]; then
   echo "Options:"
   echo "  --no-hooks    Skip git hook installation"
   echo "  --hooks-only  Only install/update git hooks (skip template files)"
+  echo "  --force       Overwrite existing CLAUDE.md without prompting"
   echo "  --help, -h    Show this help message"
   echo ""
   echo "Installs into your project:"
@@ -37,13 +40,27 @@ if [ "${1}" = "--help" ] || [ "${1}" = "-h" ]; then
 fi
 
 # Parse flags
-if [ "${1}" = "--no-hooks" ]; then
-  INSTALL_HOOKS=false
-  shift
-elif [ "${1}" = "--hooks-only" ]; then
-  HOOKS_ONLY=true
-  shift
-fi
+while [[ "$1" == --* ]]; do
+  case "$1" in
+    --no-hooks)
+      INSTALL_HOOKS=false
+      shift
+      ;;
+    --hooks-only)
+      HOOKS_ONLY=true
+      shift
+      ;;
+    --force)
+      FORCE_OVERWRITE=true
+      shift
+      ;;
+    *)
+      echo "Error: Unknown option: $1"
+      echo "Run ./setup.sh --help for usage."
+      exit 1
+      ;;
+  esac
+done
 
 TARGET="${1:-.}"
 
@@ -75,24 +92,36 @@ if [ ! -f "$TEMPLATE_DIR/.claude/CLAUDE.md" ]; then
   exit 1
 fi
 
-# Check for existing KEEL install
-if [ -f "$TARGET/.claude/CLAUDE.md" ] && grep -q "KEEL" "$TARGET/.claude/CLAUDE.md" 2>/dev/null; then
-  echo "KEEL is already installed in $TARGET"
-  read -p "Overwrite? (y/N): " confirm
+confirm_overwrite() {
+  local prompt_message="$1"
+
+  if [ "$FORCE_OVERWRITE" = true ]; then
+    return 0
+  fi
+
+  if [ ! -t 0 ]; then
+    echo "Error: ${prompt_message}"
+    echo "Re-run with --force to overwrite in non-interactive mode."
+    exit 1
+  fi
+
+  read -r -p "Overwrite? (y/N): " confirm
   if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
     echo "Aborted."
     exit 0
   fi
+}
+
+# Check for existing KEEL install
+if [ -f "$TARGET/.claude/CLAUDE.md" ] && grep -q "KEEL" "$TARGET/.claude/CLAUDE.md" 2>/dev/null; then
+  echo "KEEL is already installed in $TARGET"
+  confirm_overwrite "KEEL is already installed in $TARGET"
 fi
 
 # Warn if .claude/CLAUDE.md exists but isn't KEEL
 if [ -f "$TARGET/.claude/CLAUDE.md" ] && ! grep -q "KEEL" "$TARGET/.claude/CLAUDE.md" 2>/dev/null; then
   echo "Warning: $TARGET/.claude/CLAUDE.md already exists with non-KEEL content."
-  read -p "Overwrite? (y/N): " confirm
-  if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
-    echo "Aborted. You can manually merge the KEEL instructions into your existing CLAUDE.md."
-    exit 0
-  fi
+  confirm_overwrite "$TARGET/.claude/CLAUDE.md already exists with non-KEEL content"
 fi
 
 # ─── Copy template files ───
