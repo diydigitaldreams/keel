@@ -4,6 +4,7 @@
 #        ./setup.sh --help
 #        ./setup.sh --no-hooks [target-directory]
 #        ./setup.sh --hooks-only [target-directory]
+#        ./setup.sh --force [target-directory]
 
 set -e
 
@@ -12,6 +13,7 @@ TEMPLATE_DIR="$SCRIPT_DIR/template"
 HOOKS_DIR="$SCRIPT_DIR/hooks"
 INSTALL_HOOKS=true
 HOOKS_ONLY=false
+FORCE_OVERWRITE=false
 
 # Help
 if [ "${1}" = "--help" ] || [ "${1}" = "-h" ]; then
@@ -22,10 +24,11 @@ if [ "${1}" = "--help" ] || [ "${1}" = "-h" ]; then
   echo "Options:"
   echo "  --no-hooks    Skip git hook installation"
   echo "  --hooks-only  Only install/update git hooks (skip template files)"
+  echo "  --force       Overwrite existing CHATGPT.md without prompting"
   echo "  --help, -h    Show this help message"
   echo ""
   echo "Installs into your project:"
-  echo "  .claude/CLAUDE.md    — AI agent instructions"
+  echo "  .chatgpt/CHATGPT.md    — AI agent instructions"
   echo "  docs/SCOPE.md        — Project spec (populated during SCOPE)"
   echo "  docs/ROADMAP.md      — Phase roadmap (populated during SCOPE)"
   echo "  docs/phases/         — Phase plans and logs (populated during BUILD)"
@@ -37,13 +40,27 @@ if [ "${1}" = "--help" ] || [ "${1}" = "-h" ]; then
 fi
 
 # Parse flags
-if [ "${1}" = "--no-hooks" ]; then
-  INSTALL_HOOKS=false
-  shift
-elif [ "${1}" = "--hooks-only" ]; then
-  HOOKS_ONLY=true
-  shift
-fi
+while [[ "$1" == --* ]]; do
+  case "$1" in
+    --no-hooks)
+      INSTALL_HOOKS=false
+      shift
+      ;;
+    --hooks-only)
+      HOOKS_ONLY=true
+      shift
+      ;;
+    --force)
+      FORCE_OVERWRITE=true
+      shift
+      ;;
+    *)
+      echo "Error: Unknown option: $1"
+      echo "Run ./setup.sh --help for usage."
+      exit 1
+      ;;
+  esac
+done
 
 TARGET="${1:-.}"
 
@@ -70,42 +87,54 @@ if [ "$HOOKS_ONLY" = true ]; then
 fi
 
 # Validate template exists
-if [ ! -f "$TEMPLATE_DIR/.claude/CLAUDE.md" ]; then
+if [ ! -f "$TEMPLATE_DIR/.chatgpt/CHATGPT.md" ]; then
   echo "Error: Template not found. Run this script from the KEEL repo root."
   exit 1
 fi
 
-# Check for existing KEEL install
-if [ -f "$TARGET/.claude/CLAUDE.md" ] && grep -q "KEEL" "$TARGET/.claude/CLAUDE.md" 2>/dev/null; then
-  echo "KEEL is already installed in $TARGET"
-  read -p "Overwrite? (y/N): " confirm
+confirm_overwrite() {
+  local prompt_message="$1"
+
+  if [ "$FORCE_OVERWRITE" = true ]; then
+    return 0
+  fi
+
+  if [ ! -t 0 ]; then
+    echo "Error: ${prompt_message}"
+    echo "Re-run with --force to overwrite in non-interactive mode."
+    exit 1
+  fi
+
+  read -r -p "Overwrite? (y/N): " confirm
   if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
     echo "Aborted."
     exit 0
   fi
+}
+
+# Check for existing KEEL install
+if [ -f "$TARGET/.chatgpt/CHATGPT.md" ] && grep -q "KEEL" "$TARGET/.chatgpt/CHATGPT.md" 2>/dev/null; then
+  echo "KEEL is already installed in $TARGET"
+  confirm_overwrite "KEEL is already installed in $TARGET"
 fi
 
-# Warn if .claude/CLAUDE.md exists but isn't KEEL
-if [ -f "$TARGET/.claude/CLAUDE.md" ] && ! grep -q "KEEL" "$TARGET/.claude/CLAUDE.md" 2>/dev/null; then
-  echo "Warning: $TARGET/.claude/CLAUDE.md already exists with non-KEEL content."
-  read -p "Overwrite? (y/N): " confirm
-  if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
-    echo "Aborted. You can manually merge the KEEL instructions into your existing CLAUDE.md."
-    exit 0
-  fi
+# Warn if .chatgpt/CHATGPT.md exists but isn't KEEL
+if [ -f "$TARGET/.chatgpt/CHATGPT.md" ] && ! grep -q "KEEL" "$TARGET/.chatgpt/CHATGPT.md" 2>/dev/null; then
+  echo "Warning: $TARGET/.chatgpt/CHATGPT.md already exists with non-KEEL content."
+  confirm_overwrite "$TARGET/.chatgpt/CHATGPT.md already exists with non-KEEL content"
 fi
 
 # ─── Copy template files ───
-mkdir -p "$TARGET/.claude"
+mkdir -p "$TARGET/.chatgpt"
 mkdir -p "$TARGET/docs/phases"
 
-# Back up existing CLAUDE.md before overwriting
-if [ -f "$TARGET/.claude/CLAUDE.md" ]; then
-  cp "$TARGET/.claude/CLAUDE.md" "$TARGET/.claude/CLAUDE.md.bak"
-  echo "Backed up existing CLAUDE.md to CLAUDE.md.bak"
+# Back up existing CHATGPT.md before overwriting
+if [ -f "$TARGET/.chatgpt/CHATGPT.md" ]; then
+  cp "$TARGET/.chatgpt/CHATGPT.md" "$TARGET/.chatgpt/CHATGPT.md.bak"
+  echo "Backed up existing CHATGPT.md to CHATGPT.md.bak"
 fi
 
-cp "$TEMPLATE_DIR/.claude/CLAUDE.md" "$TARGET/.claude/CLAUDE.md"
+cp "$TEMPLATE_DIR/.chatgpt/CHATGPT.md" "$TARGET/.chatgpt/CHATGPT.md"
 
 # Only copy SCOPE.md and ROADMAP.md if they don't already exist (don't overwrite project state)
 if [ ! -f "$TARGET/docs/SCOPE.md" ]; then
@@ -139,7 +168,7 @@ fi
 echo ""
 echo "KEEL installed in $TARGET"
 echo ""
-echo "  .claude/CLAUDE.md    — the brain (all instructions)"
+echo "  .chatgpt/CHATGPT.md    — the brain (all instructions)"
 echo "  docs/SCOPE.md        — project spec"
 echo "  docs/ROADMAP.md      — phase roadmap"
 echo "  docs/phases/         — phase plans and logs"

@@ -18,7 +18,7 @@ if [ "${1}" = "--help" ] || [ "${1}" = "-h" ]; then
   echo "Usage: ./validate.sh [project-directory]"
   echo ""
   echo "Checks:"
-  echo "  - Required files exist (.claude/CLAUDE.md, docs/SCOPE.md, docs/ROADMAP.md)"
+  echo "  - Required files exist (.chatgpt/CHATGPT.md, docs/SCOPE.md, docs/ROADMAP.md)"
   echo "  - Every roadmap phase has a matching directory"
   echo "  - Every phase directory has PLAN.md and LOG.md"
   echo "  - No orphaned phase directories"
@@ -55,16 +55,16 @@ check_file() {
 }
 
 echo "Core files:"
-check_file ".claude/CLAUDE.md"
+check_file ".chatgpt/CHATGPT.md"
 check_file "docs/SCOPE.md"
 check_file "docs/ROADMAP.md"
 echo ""
 
-# ─── 2. CLAUDE.md contains KEEL ───
+# ─── 2. CHATGPT.md contains KEEL ───
 
-if [ -f "$TARGET/.claude/CLAUDE.md" ]; then
-  if ! grep -q "KEEL" "$TARGET/.claude/CLAUDE.md" 2>/dev/null; then
-    echo -e "  ${YELLOW}!${NC} .claude/CLAUDE.md exists but doesn't contain KEEL instructions"
+if [ -f "$TARGET/.chatgpt/CHATGPT.md" ]; then
+  if ! grep -q "KEEL" "$TARGET/.chatgpt/CHATGPT.md" 2>/dev/null; then
+    echo -e "  ${YELLOW}!${NC} .chatgpt/CHATGPT.md exists but doesn't contain KEEL instructions"
     WARNINGS=$((WARNINGS + 1))
   fi
 fi
