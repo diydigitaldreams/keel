@@ -10,7 +10,7 @@ AI coding agents degrade over long sessions. As the context window fills up, out
 
 KEEL solves it with files.
 
-The framework IS the files. A `CLAUDE.md` that contains every instruction your AI agent needs, and a `docs/` directory that holds project state as human-readable markdown. When you clear context and start a new session, the agent reads the files and picks up exactly where it left off. No state is lost because no state lived in memory — it was always on disk.
+The framework IS the files. A `CHATGPT.md` that contains every instruction your AI agent needs, and a `docs/` directory that holds project state as human-readable markdown. When you clear context and start a new session, the agent reads the files and picks up exactly where it left off. No state is lost because no state lived in memory — it was always on disk.
 
 No runtime. No dependencies. No config. If your agent can read markdown, KEEL works.
 
@@ -18,7 +18,7 @@ No runtime. No dependencies. No config. If your agent can read markdown, KEEL wo
 
 ```bash
 git clone https://github.com/diydigitaldreams/keel.git
-cp -r keel/template/.claude your-project/.claude
+cp -r keel/template/.chatgpt your-project/.chatgpt
 cp -r keel/template/docs your-project/docs
 ```
 
@@ -53,8 +53,8 @@ Context rot is eliminated by clearing context between phases. Each phase gets it
 
 ```
 your-project/
-├── .claude/
-│   └── CLAUDE.md                ← The brain. All instructions live here.
+├── .chatgpt/
+│   └── CHATGPT.md                ← The brain. All instructions live here.
 └── docs/
     ├── SCOPE.md                 ← What we're building
     ├── ROADMAP.md               ← Phases with status tracking
@@ -165,12 +165,12 @@ KEEL includes optional git hooks that enforce conventions automatically. No runt
 ./keel/setup.sh --no-hooks /path/to/your-project
 ```
 
-**Force overwrite existing CLAUDE.md (non-interactive/CI):**
+**Force overwrite existing CHATGPT.md (non-interactive/CI):**
 ```bash
 ./keel/setup.sh --force /path/to/your-project
 ```
 
-If `setup.sh` detects an existing `.claude/CLAUDE.md`, it prompts before overwriting in interactive shells. In non-interactive environments, it exits with an error unless `--force` is provided.
+If `setup.sh` detects an existing `.chatgpt/CHATGPT.md`, it prompts before overwriting in interactive shells. In non-interactive environments, it exits with an error unless `--force` is provided.
 
 
 ### What the hooks enforce
@@ -193,7 +193,7 @@ $ ./validate.sh
 [KEEL] Validating project: .
 
 Core files:
-  ✓ .claude/CLAUDE.md
+  ✓ .chatgpt/CHATGPT.md
   ✓ docs/SCOPE.md
   ✓ docs/ROADMAP.md
 
@@ -222,8 +222,8 @@ KEEL works with any AI coding agent that reads an instruction file:
 
 | Agent | Setup |
 |---|---|
-| **Claude Code** | Works natively — reads `.claude/CLAUDE.md` |
-| **Cursor** | Copy CLAUDE.md content into `.cursor/rules/keel.md` |
+| **ChatGPT** | Works natively — reads `.chatgpt/CHATGPT.md` |
+| **Cursor** | Copy CHATGPT.md content into `.cursor/rules/keel.md` |
 | **Windsurf** | Add to `.windsurfrules` or cascade instructions |
 | **Codex** | Copy to `.codex/` instructions directory |
 | **Gemini CLI** | Copy to `.gemini/` instructions |

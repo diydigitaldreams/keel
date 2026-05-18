@@ -11,7 +11,7 @@ Context rot kills long sessions. KEEL prevents it.
 - **One phase per context window.** Never work across multiple roadmap phases in the same session.
 - After completing SCOPE or SHIP, tell the user to clear context (`/clear`, new chat, or equivalent) before starting the next step.
 - When starting work on a roadmap phase, read ONLY:
-  1. This file (CLAUDE.md)
+  1. This file (CHATGPT.md)
   2. `docs/SCOPE.md` (project identity — always relevant)
   3. `docs/ROADMAP.md` (to identify the current phase)
   4. The current phase directory: `docs/phases/NN-phase-name/`
@@ -42,7 +42,7 @@ Keep going until you could explain the project to another developer cold. Then p
 
 Once the interview is approved, research the project's technical landscape before writing the spec. This is where depth matters — bad research means bad plans.
 
-**If your agent supports subagent spawning (Claude Code, Codex, etc.):** Launch these as parallel subagents. Each subagent gets a focused research brief and writes its section independently. This keeps the main context clean.
+**If your agent supports subagent spawning (ChatGPT, Codex, etc.):** Launch these as parallel subagents. Each subagent gets a focused research brief and writes its section independently. This keeps the main context clean.
 
 **If your agent does not support subagents:** Do this sequentially in the current context, but keep each section concise.
 
